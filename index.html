@@ -393,14 +393,20 @@ function loadScript(src){
 }
 
 async function initSupabase(){
-  try{
-    await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    return true;
-  }catch(e){
-    console.error('Supabase no disponible, se sigue en modo local', e);
-    return false;
+  const cdns = [
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+    'https://unpkg.com/@supabase/supabase-js@2'
+  ];
+  for(const src of cdns){
+    try{
+      await loadScript(src);
+      if(window.supabase && window.supabase.createClient){
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        return true;
+      }
+    }catch(e){ console.error('Falló CDN', src, e); }
   }
+  return false;
 }
 
 async function loadState(){
