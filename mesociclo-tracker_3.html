@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Mesociclo 1 — Seguimiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --card:#ffffff;
+    --card-hi:#f6f6f4;
+    --line:#e6e5e0;
+    --text:#1a1a18;
+    --muted:#8a887f;
+    --accent:#2f6b4f;
+    --accent-soft:#e9f2ec;
+    --rir:#b5652f;
+    --rir-soft:#faeee3;
+    --done:#1a1a18;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; overscroll-behavior-y:none;}
+  body{padding-bottom:40px;}
+
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    background:#ffffff;
+    padding:20px 16px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  .title-row{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:16px;}
+  .title{
+    font-family:'Oswald',sans-serif; font-weight:600; font-size:21px; letter-spacing:0.3px;
+    text-transform:uppercase; color:var(--text);
+  }
+  .title .num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:50%; background:var(--text); color:#fff;
+    font-size:13px; margin-left:6px; vertical-align:middle;
+  }
+  .subtitle{font-size:11px; color:var(--muted); margin-top:4px; letter-spacing:0.2px;}
+
+  .week-pills{display:flex; gap:6px; margin-bottom:10px;}
+  .week-pill{
+    flex:1; text-align:center; padding:10px 0; border-radius:10px;
+    background:#fff; border:1px solid var(--line);
+    font-family:'Oswald',sans-serif; font-size:13px; font-weight:600; letter-spacing:0.5px;
+    color:var(--muted);
+  }
+  .week-pill .pct{display:block; font-size:9px; font-weight:500; margin-top:2px; color:#b8b6ad;}
+  .week-pill.active{background:var(--text); color:#fff; border-color:var(--text);}
+  .week-pill.active .pct{color:#c9c9c4;}
+
+  .day-tabs{display:flex; gap:6px;}
+  .day-tab{
+    flex:1; text-align:center; padding:10px 0; border-radius:10px;
+    background:transparent; border:1px solid var(--line); color:var(--muted);
+    font-family:'Oswald',sans-serif; font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+  }
+  .day-tab.active{border-color:var(--accent); color:var(--accent); background:var(--accent-soft);}
+  .day-tab .check{display:inline-block; margin-left:5px; color:var(--accent); font-size:11px;}
+
+  .content{padding:16px;}
+
+  .section-label{
+    font-family:'Oswald',sans-serif; font-size:11.5px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); margin:24px 0 10px; display:flex; align-items:center; gap:8px;
+  }
+  .section-label::after{content:""; flex:1; height:1px; background:var(--line);}
+  .section-label.superserie{color:var(--rir);}
+
+  .ex-card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:14px 14px 12px; margin-bottom:10px; transition:border-color .15s, background .15s;
+  }
+  .ex-card.done{border-color:var(--text); background:var(--card-hi);}
+
+  .ex-head{display:flex; align-items:flex-start; gap:10px;}
+  .chk{
+    width:26px; height:26px; min-width:26px; border-radius:8px; border:2px solid var(--line);
+    display:flex; align-items:center; justify-content:center; margin-top:2px; cursor:pointer;
+    background:#fff; font-size:15px; color:transparent; font-weight:700;
+  }
+  .ex-card.done .chk{background:var(--done); border-color:var(--done); color:#fff;}
+
+  .ex-thumb{
+    position:relative; width:64px; height:64px; min-width:64px; border-radius:10px; overflow:hidden;
+    border:1px solid var(--line); display:block; background:var(--card-hi);
+  }
+  .ex-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .ex-thumb .play{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.28); color:#fff; font-size:15px;
+  }
+
+  .ex-name{font-family:'Oswald',sans-serif; font-weight:600; font-size:16px; line-height:1.25; color:var(--text);}
+  .ex-meta{display:flex; gap:8px; margin-top:6px; flex-wrap:wrap;}
+  .tag{font-size:11px; padding:3px 9px; border-radius:20px; background:var(--card-hi); color:var(--muted); font-weight:600; border:1px solid var(--line);}
+  .tag.rir{color:var(--rir); background:var(--rir-soft); border-color:transparent;}
+  .tag.series{color:var(--accent); background:var(--accent-soft); border-color:transparent;}
+
+  .ex-detail{font-size:12.5px; color:var(--muted); margin-top:8px; line-height:1.5; padding-left:110px;}
+
+  .ex-extra{margin-top:10px; margin-left:110px; display:flex; flex-direction:column; gap:6px;}
+  .ex-extra input{
+    width:100%; background:var(--card-hi); border:1px solid var(--line); border-radius:8px;
+    padding:8px 10px; color:var(--text); font-size:13px; font-family:'Inter',sans-serif;
+  }
+  .ex-extra input::placeholder{color:#b3b1a8;}
+  .ex-extra input:focus{outline:none; border-color:var(--text);}
+  .video-row{display:flex; align-items:center; gap:6px;}
+  .video-row input{flex:1;}
+  .video-link{
+    display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:var(--accent);
+    text-decoration:none; padding:6px 2px 0; margin-top:2px;
+  }
+  .video-link svg{width:13px; height:13px;}
+
+  .cardio-card{
+    background:var(--card-hi); border:1px dashed var(--line); border-radius:14px;
+    padding:14px; margin-top:18px; text-align:center;
+  }
+  .cardio-card .lbl{font-family:'Oswald',sans-serif; letter-spacing:1px; font-size:13px; color:var(--accent); text-transform:uppercase;}
+  .cardio-card .sub{font-size:11.5px; color:var(--muted); margin-top:3px;}
+
+  .footer-note{
+    text-align:center; font-size:10.5px; color:#b3b1a8; margin-top:26px; padding:0 20px; line-height:1.6;
+  }
+
+  .save-toast{
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--text); color:#fff; font-family:'Oswald',sans-serif; font-weight:600; font-size:12px;
+    padding:8px 16px; border-radius:20px; letter-spacing:0.5px; opacity:0; transition:all .25s; pointer-events:none;
+    z-index:50;
+  }
+  .save-toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="title-row">
+    <div>
+      <div class="title">Mesociclo<span class="num">1</span></div>
+      <div class="subtitle" id="dateLabel">Inicio 03/08/26 — Semana 1</div>
+    </div>
+  </div>
+  <div class="week-pills" id="weekPills"></div>
+  <div class="day-tabs" id="dayTabs"></div>
+</div>
+
+<div class="content" id="content"></div>
+
+<div class="footer-note">Marcá el check al terminar cada ejercicio · anotá kg/repes/sensaciones y pegá el link del video de la profe cuando lo tengas</div>
+<div class="save-toast" id="toast">Guardado ✓</div>
+
+<script>
+const ROUTINE = {
+  1: {
+    LUNES: {
+      warmup: [
+        {n:"Wall squat -90°", s:"2", r:"15\"", rir:"", d:"Rodilla por delante del talón; cadera a 90°"},
+        {n:"Sentadilla sumo", s:"2", r:"5", rir:"", d:"Sacá pecho y cola al bajar"},
+        {n:"90-90", s:"2", r:"5 + 5", rir:"", d:"Rodilla y cadera a 90°; si no sale, apoyá las manos detrás"},
+      ],
+      main: [
+        {n:"Prensa 45°", s:"3", r:"8-10", rir:"RIR 2", d:"Posición cómoda que te permita mayor profundidad posible; no levantes talones; sustituto"},
+        {n:"Percha toma neutra ancha", s:"3", r:"10-12", rir:"RIR 2", d:"Sacá pecho; antebrazo vertical; afirmate contra el rodillo; si está ocupada la toma, hacela con esta"},
+        {n:"Elevaciones de cadera", s:"3", r:"10-12", rir:"RIR 2", d:"Apretá fuerte glúteos arriba; en máquina"},
+        {n:"Aperturas en máquina", s:"3", r:"10-12", rir:"RIR 2", d:"Máxima apertura posible; sacá pecho; sustituto"},
+        {n:"Sillón de posteriores", s:"3", r:"10-12", rir:"RIR 2", d:"Extendé por completo la rodilla en cada repetición; sustituto"},
+        {n:"Bicho muerto", s:"3", r:"5 + 5", rir:"", d:"Lumbar contra el piso en todo momento"},
+      ],
+      cardio:true
+    },
+    JUEVES: {
+      warmup:[
+        {n:"Walkout", s:"2", r:"5", rir:"", d:"Terminá en posición de plancha"},
+        {n:"Step downs", s:"2", r:"5 + 5", rir:"", d:"Sobre un step; rodilla alineada con tobillo"},
+        {n:"Spiderman", s:"2", r:"5 + 5", rir:"", d:"Adelantá la pierna lo más que puedas por afuera de la mano"},
+      ],
+      main:[
+        {n:"Peso muerto rumano", s:"3", r:"8-10", rir:"RIR 2", d:"Bracing; sacá cola"},
+        {n:"Camilla de cuádriceps", s:"3", r:"10-12", rir:"RIR 2", d:"Extendé la rodilla completamente"},
+        {n:"Abducciones en máquina", s:"3", r:"12-15", rir:"RIR 2", d:"Máxima apertura"},
+      ],
+      superserie:[
+        {n:"Sentadilla copa", s:"3", r:"10-12", rir:"RIR 2", d:"Sacá cola y pecho; no levantes talones"},
+        {n:"Puente lateral", s:"3", r:"20\"-30\"/lado", rir:"", d:"Empujá cadera hacia arriba; sacá pecho"},
+        {n:"Aducciones en máquina", s:"3", r:"10-12", rir:"RIR 2", d:"Máxima apertura"},
+      ],
+      cardio:true
+    },
+    VIERNES:{
+      warmup:[
+        {n:"Pull apart", s:"2", r:"10", rir:"", d:"Codos extendidos; abrí los brazos lo más posible"},
+        {n:"Rotación torácica en cuadrupedia", s:"2", r:"5 + 5", rir:"", d:"Máximo recorrido posible en ambas direcciones"},
+        {n:"Carpa", s:"2", r:"5", rir:"", d:"Sacá cola; rodillas extendidas"},
+      ],
+      main:[
+        {n:"Press de hombros sentada con mancuernas", s:"3", r:"10-12", rir:"RIR 2", d:"Bajá hasta la altura del hombro"},
+        {n:"Remo alto en polea", s:"3", r:"10-12", rir:"RIR 2", d:"Codos a la altura de los hombros; con barra larga (no cuerdita)"},
+        {n:"Pecho plano en máquina", s:"3", r:"10-12", rir:"RIR 2", d:"Hombros atrás y abajo (sacá pecho)"},
+        {n:"Remo Dorian toma neutra", s:"3", r:"10-12", rir:"RIR 2", d:"Pecho apoyado; remá hasta el torso; codo termina a 90°"},
+      ],
+      superserie:[
+        {n:"Tríceps en polea codos abajo", s:"3", r:"10-12", rir:"RIR 2", d:"Brazo fijo; máximo recorrido en ambas direcciones"},
+        {n:"Bíceps martillo de pie", s:"3", r:"10-12", rir:"RIR 2", d:"Brazo fijo; máximo recorrido en ambas direcciones"},
+      ],
+      cardio:true
+    }
+  }
+};
+
+function cloneWeek(base){ return JSON.parse(JSON.stringify(base)); }
+
+ROUTINE[2] = cloneWeek(ROUTINE[1]);
+ROUTINE[2].LUNES.main[0] = {n:"Sentadilla en Smith", s:"3", r:"8-10", rir:"RIR 2", d:"Sacá cola y pecho; no levantes talones; sustituto"};
+ROUTINE[2].LUNES.main[2].d = "Apretá fuerte glúteos arriba; en máquina o libre";
+
+ROUTINE[3] = cloneWeek(ROUTINE[2]);
+["LUNES","JUEVES","VIERNES"].forEach(day=>{
+  ["main","superserie"].forEach(block=>{
+    if(!ROUTINE[3][day][block]) return;
+    ROUTINE[3][day][block].forEach(ex=>{ if(ex.rir) ex.rir = "RIR 2-1"; });
+  });
+});
+
+ROUTINE[4] = cloneWeek(ROUTINE[2]);
+["LUNES","JUEVES","VIERNES"].forEach(day=>{
+  ["main","superserie"].forEach(block=>{
+    if(!ROUTINE[4][day][block]) return;
+    ROUTINE[4][day][block].forEach(ex=>{ if(ex.rir) ex.rir = "RIR 1"; });
+  });
+});
+
+const DAYS = ["LUNES","JUEVES","VIERNES"];
+const SECTION_LABEL = {warmup:"Entrada en calor", main:"Principal", superserie:"Superserie"};
+
+function youtubeId(url){
+  if(!url) return null;
+  try{
+    const u = new URL(url);
+    if(u.pathname.includes('/shorts/')) return u.pathname.split('/shorts/')[1].split('/')[0];
+    if(u.searchParams.get('v')) return u.searchParams.get('v');
+    if(u.hostname.includes('youtu.be')) return u.pathname.replace('/','');
+  }catch(e){ return null; }
+  return null;
+}
+function youtubeThumb(url){
+  const id = youtubeId(url);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+}
+
+// Links a los videos de ejemplo de la profe, extraídos del PDF original
+const PROFE_VIDEOS = {
+ "w1-LUNES-warmup-0": "https://youtube.com/shorts/X22wHjC0HBE?feature=share",
+ "w1-LUNES-warmup-1": "https://www.youtube.com/watch?v=dtK4-DhgPj4",
+ "w1-LUNES-warmup-2": "https://youtube.com/shorts/ZW27QIlq_wI",
+ "w1-LUNES-main-0": "https://www.youtube.com/shorts/EotSw18oR9w?app=desktop",
+ "w1-LUNES-main-1": "https://www.youtube.com/shorts/eBY7UNTtjmA?app=desktop",
+ "w1-LUNES-main-2": "https://www.youtube.com/watch?v=5S8SApGU_Lk",
+ "w1-LUNES-main-3": "https://www.youtube.com/shorts/xYExAgLt_4I",
+ "w1-LUNES-main-4": "https://www.youtube.com/shorts/Y3_BZbX4epo",
+ "w1-LUNES-main-5": "https://www.youtube.com/shorts/DqLL45uk2Tk",
+ "w1-JUEVES-warmup-0": "https://www.youtube.com/shorts/-q1XGQ2VMUU",
+ "w1-JUEVES-warmup-1": "https://www.youtube.com/shorts/z87nPg4ac0o",
+ "w1-JUEVES-warmup-2": "https://www.youtube.com/shorts/jConzZdSulE",
+ "w1-JUEVES-main-0": "https://www.youtube.com/watch?v=LURGDIX3adY",
+ "w1-JUEVES-main-1": "https://www.youtube.com/shorts/d3d2yz7V26c",
+ "w1-JUEVES-main-2": "https://www.youtube.com/shorts/tu4o4quPv2k",
+ "w1-JUEVES-superserie-0": "https://www.youtube.com/watch?v=f-Vf2yRRqOg",
+ "w1-JUEVES-superserie-1": "https://www.youtube.com/shorts/fzLeV8X0Gb8",
+ "w1-JUEVES-superserie-2": "https://www.youtube.com/watch?v=e9AqTFMmP18",
+ "w1-VIERNES-warmup-0": "https://www.youtube.com/shorts/SuvO4TBwSu4",
+ "w1-VIERNES-warmup-1": "https://youtube.com/shorts/Ew4Z-25PLVs",
+ "w1-VIERNES-warmup-2": "https://www.youtube.com/shorts/urvdSFjorgI",
+ "w1-VIERNES-main-0": "https://www.youtube.com/shorts/FghebqCF_o8",
+ "w1-VIERNES-main-1": "https://www.youtube.com/shorts/8g4zFoiyo0w",
+ "w1-VIERNES-main-2": "https://www.youtube.com/shorts/4SscB4eAxt4",
+ "w1-VIERNES-main-3": "https://www.youtube.com/shorts/nVsFg1JXcPM",
+ "w1-VIERNES-superserie-0": "https://www.youtube.com/shorts/1FjkhpZsaxc",
+ "w1-VIERNES-superserie-1": "https://www.youtube.com/shorts/0qzSDAfBzSw",
+ "w2-LUNES-warmup-0": "https://youtube.com/shorts/X22wHjC0HBE?feature=share",
+ "w2-LUNES-warmup-1": "https://www.youtube.com/watch?v=dtK4-DhgPj4",
+ "w2-LUNES-warmup-2": "https://youtube.com/shorts/ZW27QIlq_wI",
+ "w2-LUNES-main-0": "https://www.youtube.com/watch?v=-eO_VydErV0",
+ "w2-LUNES-main-1": "https://www.youtube.com/shorts/eBY7UNTtjmA?app=desktop",
+ "w2-LUNES-main-2": "https://www.youtube.com/watch?v=5S8SApGU_Lk",
+ "w2-LUNES-main-3": "https://www.youtube.com/shorts/xYExAgLt_4I",
+ "w2-LUNES-main-4": "https://www.youtube.com/shorts/Y3_BZbX4epo",
+ "w2-LUNES-main-5": "https://www.youtube.com/shorts/DqLL45uk2Tk",
+ "w2-JUEVES-warmup-0": "https://www.youtube.com/shorts/-q1XGQ2VMUU",
+ "w2-JUEVES-warmup-1": "https://www.youtube.com/shorts/z87nPg4ac0o",
+ "w2-JUEVES-warmup-2": "https://www.youtube.com/shorts/jConzZdSulE",
+ "w2-JUEVES-main-0": "https://www.youtube.com/watch?v=LURGDIX3adY",
+ "w2-JUEVES-main-1": "https://www.youtube.com/shorts/d3d2yz7V26c",
+ "w2-JUEVES-main-2": "https://www.youtube.com/shorts/tu4o4quPv2k",
+ "w2-JUEVES-superserie-0": "https://www.youtube.com/watch?v=f-Vf2yRRqOg",
+ "w2-JUEVES-superserie-1": "https://www.youtube.com/shorts/fzLeV8X0Gb8",
+ "w2-JUEVES-superserie-2": "https://www.youtube.com/watch?v=e9AqTFMmP18",
+ "w2-VIERNES-warmup-0": "https://www.youtube.com/shorts/SuvO4TBwSu4",
+ "w2-VIERNES-warmup-1": "https://youtube.com/shorts/Ew4Z-25PLVs",
+ "w2-VIERNES-warmup-2": "https://www.youtube.com/shorts/urvdSFjorgI",
+ "w2-VIERNES-main-0": "https://www.youtube.com/shorts/FghebqCF_o8",
+ "w2-VIERNES-main-1": "https://www.youtube.com/shorts/8g4zFoiyo0w",
+ "w2-VIERNES-main-2": "https://www.youtube.com/shorts/4SscB4eAxt4",
+ "w2-VIERNES-main-3": "https://www.youtube.com/shorts/nVsFg1JXcPM",
+ "w2-VIERNES-superserie-0": "https://www.youtube.com/shorts/1FjkhpZsaxc",
+ "w2-VIERNES-superserie-1": "https://www.youtube.com/shorts/0qzSDAfBzSw",
+ "w3-LUNES-warmup-0": "https://youtube.com/shorts/X22wHjC0HBE?feature=share",
+ "w3-LUNES-warmup-1": "https://www.youtube.com/watch?v=dtK4-DhgPj4",
+ "w3-LUNES-warmup-2": "https://youtube.com/shorts/ZW27QIlq_wI",
+ "w3-LUNES-main-0": "https://www.youtube.com/watch?v=-eO_VydErV0",
+ "w3-LUNES-main-1": "https://www.youtube.com/shorts/eBY7UNTtjmA?app=desktop",
+ "w3-LUNES-main-2": "https://www.youtube.com/watch?v=5S8SApGU_Lk",
+ "w3-LUNES-main-3": "https://www.youtube.com/shorts/xYExAgLt_4I",
+ "w3-LUNES-main-4": "https://www.youtube.com/shorts/Y3_BZbX4epo",
+ "w3-LUNES-main-5": "https://www.youtube.com/shorts/DqLL45uk2Tk",
+ "w3-JUEVES-warmup-0": "https://www.youtube.com/shorts/-q1XGQ2VMUU",
+ "w3-JUEVES-warmup-1": "https://www.youtube.com/shorts/z87nPg4ac0o",
+ "w3-JUEVES-warmup-2": "https://www.youtube.com/shorts/jConzZdSulE",
+ "w3-JUEVES-main-0": "https://www.youtube.com/watch?v=LURGDIX3adY",
+ "w3-JUEVES-main-1": "https://www.youtube.com/shorts/d3d2yz7V26c",
+ "w3-JUEVES-main-2": "https://www.youtube.com/shorts/tu4o4quPv2k",
+ "w3-JUEVES-superserie-0": "https://www.youtube.com/watch?v=f-Vf2yRRqOg",
+ "w3-JUEVES-superserie-1": "https://www.youtube.com/shorts/fzLeV8X0Gb8",
+ "w3-JUEVES-superserie-2": "https://www.youtube.com/watch?v=e9AqTFMmP18",
+ "w3-VIERNES-warmup-0": "https://www.youtube.com/shorts/SuvO4TBwSu4",
+ "w3-VIERNES-warmup-1": "https://youtube.com/shorts/Ew4Z-25PLVs",
+ "w3-VIERNES-warmup-2": "https://www.youtube.com/shorts/urvdSFjorgI",
+ "w3-VIERNES-main-0": "https://www.youtube.com/shorts/FghebqCF_o8",
+ "w3-VIERNES-main-1": "https://www.youtube.com/shorts/8g4zFoiyo0w",
+ "w3-VIERNES-main-2": "https://www.youtube.com/shorts/4SscB4eAxt4",
+ "w3-VIERNES-main-3": "https://www.youtube.com/shorts/nVsFg1JXcPM",
+ "w3-VIERNES-superserie-0": "https://www.youtube.com/shorts/1FjkhpZsaxc",
+ "w3-VIERNES-superserie-1": "https://www.youtube.com/shorts/0qzSDAfBzSw",
+ "w4-LUNES-warmup-0": "https://youtube.com/shorts/X22wHjC0HBE?feature=share",
+ "w4-LUNES-warmup-1": "https://www.youtube.com/watch?v=dtK4-DhgPj4",
+ "w4-LUNES-warmup-2": "https://youtube.com/shorts/ZW27QIlq_wI",
+ "w4-LUNES-main-0": "https://www.youtube.com/watch?v=-eO_VydErV0",
+ "w4-LUNES-main-1": "https://www.youtube.com/shorts/eBY7UNTtjmA?app=desktop",
+ "w4-LUNES-main-2": "https://www.youtube.com/watch?v=5S8SApGU_Lk",
+ "w4-LUNES-main-3": "https://www.youtube.com/shorts/xYExAgLt_4I",
+ "w4-LUNES-main-4": "https://www.youtube.com/shorts/Y3_BZbX4epo",
+ "w4-LUNES-main-5": "https://www.youtube.com/shorts/DqLL45uk2Tk",
+ "w4-JUEVES-warmup-0": "https://www.youtube.com/shorts/-q1XGQ2VMUU",
+ "w4-JUEVES-warmup-1": "https://www.youtube.com/shorts/z87nPg4ac0o",
+ "w4-JUEVES-warmup-2": "https://www.youtube.com/shorts/jConzZdSulE",
+ "w4-JUEVES-main-0": "https://www.youtube.com/watch?v=LURGDIX3adY",
+ "w4-JUEVES-main-1": "https://www.youtube.com/shorts/d3d2yz7V26c",
+ "w4-JUEVES-main-2": "https://www.youtube.com/shorts/tu4o4quPv2k",
+ "w4-JUEVES-superserie-0": "https://www.youtube.com/watch?v=f-Vf2yRRqOg",
+ "w4-JUEVES-superserie-1": "https://www.youtube.com/shorts/fzLeV8X0Gb8",
+ "w4-JUEVES-superserie-2": "https://www.youtube.com/watch?v=e9AqTFMmP18",
+ "w4-VIERNES-warmup-0": "https://www.youtube.com/shorts/SuvO4TBwSu4",
+ "w4-VIERNES-warmup-1": "https://youtube.com/shorts/Ew4Z-25PLVs",
+ "w4-VIERNES-warmup-2": "https://www.youtube.com/shorts/urvdSFjorgI",
+ "w4-VIERNES-main-0": "https://www.youtube.com/shorts/FghebqCF_o8",
+ "w4-VIERNES-main-1": "https://www.youtube.com/shorts/8g4zFoiyo0w",
+ "w4-VIERNES-main-2": "https://www.youtube.com/shorts/4SscB4eAxt4",
+ "w4-VIERNES-main-3": "https://www.youtube.com/shorts/nVsFg1JXcPM",
+ "w4-VIERNES-superserie-0": "https://www.youtube.com/shorts/1FjkhpZsaxc",
+ "w4-VIERNES-superserie-1": "https://www.youtube.com/shorts/0qzSDAfBzSw"
+};
+
+// ====== CONFIG SUPABASE — completá con los datos de tu proyecto ======
+const SUPABASE_URL = "TU_SUPABASE_URL";       // ej: https://xxxxxxxx.supabase.co
+const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY";
+const ROW_ID = "gabi-mesociclo-1"; // identificador fijo de esta rutina, no lo cambies
+// =======================================================================
+
+const SUPABASE_CONFIGURED = SUPABASE_URL.startsWith("http");
+
+// Modo solo-lectura: compartir el link agregando ?ver=1 (para tu profe) evita que edite sin querer
+const READ_ONLY = new URLSearchParams(window.location.search).get('ver') === '1';
+
+let supabase = null;
+let state = { checks:{}, notes:{}, videos:{}, week:1, day:"LUNES" };
+let saveTimer = null;
+let realtimeChannel = null;
+
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('No se pudo cargar ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+async function initSupabase(){
+  try{
+    await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    return true;
+  }catch(e){
+    console.error('Supabase no disponible, se sigue en modo local', e);
+    return false;
+  }
+}
+
+async function loadState(){
+  // 1) Mostrar la rutina de inmediato con lo que haya en memoria/local, nunca dejar la pantalla en blanco
+  state.videos = Object.assign({}, PROFE_VIDEOS, state.videos);
+  render();
+
+  // 2) Si está configurado Supabase, conectar en segundo plano y refrescar cuando llegue
+  if(!SUPABASE_CONFIGURED) return;
+  const ok = await initSupabase();
+  if(!ok || !supabase) return;
+
+  try{
+    const { data, error } = await supabase
+      .from('mesociclo_progress')
+      .select('data')
+      .eq('id', ROW_ID)
+      .maybeSingle();
+    if(error) throw error;
+    if(data && data.data){
+      state.checks = data.data.checks || {};
+      state.notes = data.data.notes || {};
+      state.videos = Object.assign({}, PROFE_VIDEOS, data.data.videos || {});
+      render();
+    }
+  }catch(e){ console.error('No se pudo cargar de Supabase', e); }
+  subscribeRealtime();
+}
+
+function subscribeRealtime(){
+  if(!supabase || realtimeChannel) return;
+  // Si la profe o vos abren el link al mismo tiempo desde otro dispositivo, se sincroniza solo
+  realtimeChannel = supabase
+    .channel('mesociclo-progress-changes')
+    .on('postgres_changes', { event:'UPDATE', schema:'public', table:'mesociclo_progress', filter:`id=eq.${ROW_ID}` }, (payload)=>{
+      const incoming = payload.new && payload.new.data;
+      if(!incoming) return;
+      state.checks = incoming.checks || {};
+      state.notes = incoming.notes || {};
+      state.videos = Object.assign({}, PROFE_VIDEOS, incoming.videos || {});
+      render();
+    })
+    .subscribe();
+}
+
+function persist(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    if(!supabase){ console.warn("Supabase no configurado — el progreso queda solo en esta sesión."); return; }
+    try{
+      const { error } = await supabase
+        .from('mesociclo_progress')
+        .upsert({ id: ROW_ID, data: {checks:state.checks, notes:state.notes, videos:state.videos}, updated_at: new Date().toISOString() });
+      if(error) throw error;
+      showToast();
+    }catch(e){ console.error('No se pudo guardar en Supabase', e); }
+  }, 350);
+}
+
+function showToast(){
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(()=>t.classList.remove('show'), 1200);
+}
+
+function exId(week, day, block, idx){ return `w${week}-${day}-${block}-${idx}`; }
+
+function weekProgress(week){
+  let total=0, done=0;
+  DAYS.forEach(day=>{
+    const d = ROUTINE[week][day];
+    ["warmup","main","superserie"].forEach(block=>{
+      if(!d[block]) return;
+      d[block].forEach((ex,idx)=>{
+        total++;
+        if(state.checks[exId(week,day,block,idx)]) done++;
+      });
+    });
+  });
+  return total ? Math.round(done/total*100) : 0;
+}
+
+function dayDone(week, day){
+  const d = ROUTINE[week][day];
+  let total=0, done=0;
+  ["warmup","main","superserie"].forEach(block=>{
+    if(!d[block]) return;
+    d[block].forEach((ex,idx)=>{ total++; if(state.checks[exId(week,day,block,idx)]) done++; });
+  });
+  return total>0 && done===total;
+}
+
+function renderPills(){
+  const wrap = document.getElementById('weekPills');
+  wrap.innerHTML = '';
+  [1,2,3,4].forEach(w=>{
+    const pct = weekProgress(w);
+    const el = document.createElement('div');
+    el.className = 'week-pill' + (state.week===w ? ' active':'');
+    el.innerHTML = `Semana ${w}<span class="pct">${pct}%</span>`;
+    el.onclick = ()=>{ state.week=w; render(); };
+    wrap.appendChild(el);
+  });
+
+  const tabs = document.getElementById('dayTabs');
+  tabs.innerHTML = '';
+  DAYS.forEach(day=>{
+    const el = document.createElement('div');
+    el.className = 'day-tab' + (state.day===day ? ' active':'');
+    el.innerHTML = day.slice(0,3) + (dayDone(state.week,day) ? '<span class="check">✓</span>' : '');
+    el.onclick = ()=>{ state.day=day; render(); };
+    tabs.appendChild(el);
+  });
+}
+
+function exCard(week, day, block, ex, idx){
+  const id = exId(week,day,block,idx);
+  const checked = !!state.checks[id];
+  const noteVal = state.notes[id] || '';
+  const videoVal = state.videos[id] || '';
+  const thumb = youtubeThumb(videoVal);
+  const card = document.createElement('div');
+  card.className = 'ex-card' + (checked ? ' done' : '');
+
+  const tags = [];
+  tags.push(`<span class="tag series">${ex.s} × ${ex.r}</span>`);
+  if(ex.rir) tags.push(`<span class="tag rir">${ex.rir}</span>`);
+
+  card.innerHTML = `
+    <div class="ex-head">
+      <div class="chk">${checked?'✓':''}</div>
+      ${thumb ? `<a class="ex-thumb" href="${videoVal}" target="_blank" rel="noopener"><img src="${thumb}" alt="${ex.n}" loading="lazy"><span class="play">▶</span></a>` : ''}
+      <div style="flex:1; min-width:0;">
+        <div class="ex-name">${ex.n}</div>
+        <div class="ex-meta">${tags.join('')}</div>
+      </div>
+    </div>
+    <div class="ex-detail">${ex.d}</div>
+    <div class="ex-extra">
+      <input type="text" class="note-input" placeholder="kg, repes, sensaciones..." value="${noteVal.replace(/"/g,'&quot;')}">
+      <div class="video-row">
+        <input type="text" class="video-input" placeholder="Reemplazar link del video (opcional)" value="${videoVal.replace(/"/g,'&quot;')}">
+      </div>
+    </div>
+  `;
+
+  if(READ_ONLY){
+    card.querySelectorAll('input').forEach(inp=>inp.setAttribute('disabled','true'));
+  } else {
+    card.querySelector('.chk').onclick = ()=>{
+      state.checks[id] = !state.checks[id];
+      persist();
+      render();
+    };
+    card.querySelector('.note-input').oninput = (e)=>{
+      state.notes[id] = e.target.value;
+      persist();
+    };
+    card.querySelector('.video-input').addEventListener('change', (e)=>{
+      state.videos[id] = e.target.value.trim();
+      persist();
+      render();
+    });
+  }
+  return card;
+}
+
+function render(){
+  renderPills();
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+  const dayData = ROUTINE[state.week][state.day];
+
+  ["warmup","main","superserie"].forEach(block=>{
+    if(!dayData[block]) return;
+    const label = document.createElement('div');
+    label.className = 'section-label' + (block==='superserie' ? ' superserie':'');
+    label.textContent = SECTION_LABEL[block];
+    content.appendChild(label);
+    dayData[block].forEach((ex,idx)=>{
+      content.appendChild(exCard(state.week, state.day, block, ex, idx));
+    });
+  });
+
+  if(dayData.cardio){
+    const c = document.createElement('div');
+    c.className = 'cardio-card';
+    c.innerHTML = `<div class="lbl">Cardio · Aeróbico</div><div class="sub">Bici, cinta o elíptica — tiempo disponible</div>`;
+    content.appendChild(c);
+  }
+}
+
+loadState();
+</script>
+</body>
+</html>
