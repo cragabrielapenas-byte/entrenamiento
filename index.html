@@ -409,9 +409,15 @@ async function loadState(){
   render();
 
   // 2) Si está configurado Supabase, conectar en segundo plano y refrescar cuando llegue
-  if(!SUPABASE_CONFIGURED) return;
+  if(!SUPABASE_CONFIGURED){
+    showToast('Supabase no configurado en este archivo', true);
+    return;
+  }
   const ok = await initSupabase();
-  if(!ok || !supabase) return;
+  if(!ok || !supabase){
+    showToast('No se pudo cargar Supabase (revisá conexión)', true);
+    return;
+  }
 
   try{
     const { data, error } = await supabase
@@ -426,7 +432,11 @@ async function loadState(){
       state.videos = Object.assign({}, PROFE_VIDEOS, data.data.videos || {});
       render();
     }
-  }catch(e){ console.error('No se pudo cargar de Supabase', e); }
+    showToast('Conectado a Supabase ✓');
+  }catch(e){
+    console.error('No se pudo cargar de Supabase', e);
+    showToast('Error de conexión: ' + (e.message || 'ver consola'), true);
+  }
   subscribeRealtime();
 }
 
